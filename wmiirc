@@ -1,7 +1,8 @@
-
+#!/bin/dash -f
 # Configure wmii
-#wmiiscript=wmiirc # For wmii.sh
-#. wmii.sh
+wmiiscript=wmiirc # For wmii.sh
+. wmii.sh
+
 
 # Configuration Variables
 MODKEY=Mod4
@@ -11,17 +12,14 @@ LEFT=d
 RIGHT=n
 
 # Bars
-noticetimeout=1
+noticetimeout=5
 noticebar=/rbar/!notice
 
 # Colors tuples: "<text> <background> <border>"
 export WMII_NORMCOLORS='#999999 #000011 #000033'
-#export WMII_NORMCOLORS='#727272 #faffc0 #dbffc0'
 export WMII_FOCUSCOLORS='#FFFFFF #000022 #000000'
-#export WMII_FOCUSCOLORS='#000000 #faffc0 #c5c0ff'
 
-#export WMII_BACKGROUND='#000000'
-#export WMII_BACKGROUND='#faffc0'
+export WMII_BACKGROUND='#000000'
 export WMII_FONT='scientifica'
 
 set -- $(echo $WMII_NORMCOLORS $WMII_FOCUSCOLORS)
@@ -32,7 +30,7 @@ export WMII_TERM="xterm"
         mkdir "${WMII_CONFPATH%%:*}"
         res=$(wihack -type DIALOG xmessage -nearmouse -buttons Windows,Alt -print -fn $WMII_FONT \
               "Welcome to wmii,$wi_newline$wi_newline" \
-              "Most of wmii's default key bindings make use of th$wi_newline" \
+              "Most of wmii's default key bindings make use of the$wi_newline" \
               "Windows key, or equivalent. For keyboards lacking such$wi_newline" \
               "a key, many users change this to the Alt key.$wi_newline$wi_newline" \
               "Which would you prefer?")
@@ -44,9 +42,6 @@ export WMII_TERM="xterm"
 # Menu history
 hist="${WMII_CONFPATH%%:*}/history"
 histnum=5000
-
-# Making the bar be on top
-#wmiir xwrite /ctl bar on top
 
 # Column Rules
 wmiir write /colrules <<!
@@ -70,12 +65,11 @@ wmiir write /rules <<!
 
 # Status Bar Info
 status() {
-	echo -n label $(uptime | sed 's/.*://; s/, / /g') '|' $(free -hm | awk 'NR>1 && NR<3{print $3}' | export MEM=$(</dev/stdin) && free -hm | amk 'NR>2{print $3}' | export SWAP=$(</dev/stdin) && echo "Mem: $MEM Swap: $SWAP") '|' $(date "+%a %d/%m/%Y %R:%S %Z")
+	echo -n label $(echo "recipis: " && recipis) '|' $(echo "temperatus: " && temp) '|' $(uptime | sed 's/.*://; s/, / /g') '|' $(mensis)
 }
 
 # Generic overridable startup details
-#startup() { witray -NWV -p 1 -s 12 & }
-startup() { witray -SWH -p 1 -s 12 & }
+startup() { witray & }
 
 wi_runconf -s wmiirc_local
 startup
@@ -147,7 +141,7 @@ Event LeftBarMouseDown
 
 # Actions
 Action showkeys
-a	echo "$KeysHelp" | xmessage -file - -fn ${WMII_FONT%%,*}
+	echo "$KeysHelp" | xmessage -file - -fn ${WMII_FONT%%,*}
 Action quit
 	wmiir xwrite /ctl quit
 Action exec
@@ -167,7 +161,7 @@ Action status
 # Key Bindings
 KeyGroup Moving around
 Key $MODKEY-$LEFT   # Select the client to the left
-	wmiir xwrite /tag/sel/ctl select lef
+	wmiir xwrite /tag/sel/ctl select left
 Key $MODKEY-$RIGHT  # Select the client to the right
 	wmiir xwrite /tag/sel/ctl select right
 Key $MODKEY-$UP     # Select the client above
@@ -196,14 +190,12 @@ Key $MODKEY-Shift-$DOWN   # Move selected client down
 
 Key $MODKEY-Shift-space   # Toggle selected client between floating and managed layers
 	wmiir xwrite /tag/sel/ctl send sel toggle
-n
+
 KeyGroup Client actions
 Key $MODKEY-f # Toggle selected client's fullsceen state
 	wmiir xwrite /client/sel/ctl Fullscreen toggle
 Key $MODKEY-Shift-q # Close client
 	wmiir xwrite /client/sel/ctl kill
-Key $MODKEY-Shift-s # Screenshot
-        eval wmiir setsid scrot_wimenu & 
 
 KeyGroup Changing column modes
 Key $MODKEY-o # Set column to default mode
@@ -221,6 +213,8 @@ Key $MODKEY-p      # Open program menu
 
 Key $MODKEY-Return # Launch a terminal
 	eval wmiir setsid $WMII_TERM &
+Key $MODKEY-Shift-Return # Launch Emacs
+	eval wmiir setsid "$(emacs)"&
 
 KeyGroup Other
 Key $MODKEY-Control-t # Toggle all other key bindings
@@ -232,23 +226,23 @@ Key $MODKEY-Control-t # Toggle all other key bindings
 		wmiir xwrite /keys $MODKEY-Control-t
 		wmiir xwrite /ctl grabmod Mod3;;
 	esac
+Key $MODKEY-Control-s # Screenshot script
+	eval wmiir setsid "$(screenshot_wimenu)"&
 
 KeyGroup Tag actions
-Key $MODKEY-c       # Change to another tag
+Key $MODKEY-y       # Change to another tag
 	wmiir xwrite /ctl view $(wi_tags | wimenu -h "${hist}.tags" -n 50) &
-Key $MODKEY-Shift-c # Retag the selected client
+Key $MODKEY-Shift-y # Retag the selected client
 	# Assumes left-to-right order of evaluation
 	wmiir xwrite /client/$(wi_selclient)/ctl tags $(wi_tags | wimenu -h "${hist}.tags" -n 50) &
-Key $MODKEY-r	    # Move to the next tag
+Key $MODKEY-d	    # Move to the next tag
 	wmiir xwrite /ctl view $(wi_tags | wi_nexttag)
-Key $MODKEY-b	    # Move to the previous tag
+Key $MODKEY-i	    # Move to the previous tag
 	wmiir xwrite /ctl view $(wi_tags | sort -r | wi_nexttag)
 !
-#      for i in 0 I II III IV V VI VII VIII IX; do
-#       	    wi_events <<!
-      for i in 0 1 2 3 4 5 6 7 8 9; do
-	    wi_events <<!
-Key $MODKEY-$i
+	for i in 0 1 2 3 4 5 6 7 8 9; do
+		wi_events <<!
+Key $MODKEY-$i		 # Move to the numbered view
 	wmiir xwrite /ctl view "$i"
 Key $MODKEY-Shift-$i     # Retag selected client with the numbered tag
 	wmiir xwrite /client/sel/ctl tags "$i"
@@ -264,16 +258,18 @@ wmiir write /ctl <<!
 	grabmod $MODKEY
 	border 1
 !
-xsetroot -solid "$WMII_BACKGROUND" &
-#feh --bg-tile /home/m0rt/pix/papes/tile/prism_tiling_pape_thingy.png
+#xsetroot -solid "$WMII_BACKGROUND" &
+feh --bg-scale $HOME/pix/Anchorage-Desktop.jpg &
+
+#some programs
+xterm -e wicd-curses&
+audacious&
+uzbl-event-manager
 
 # Misc
 progsfile="$(wmiir namespace)/.proglist"
 action status &
 wi_proglist $PATH >$progsfile &
-lxpolkit &
-wicd-client &
-xterm &
 
 # Setup Tag Bar
 IFS="$wi_newline"
@@ -290,5 +286,7 @@ do
 		echo label $tag
 	fi | wmiir create "/lbar/$tag"
 done
+lxpolkit&
 
-#wi_eventloop
+wi_eventloop
+
